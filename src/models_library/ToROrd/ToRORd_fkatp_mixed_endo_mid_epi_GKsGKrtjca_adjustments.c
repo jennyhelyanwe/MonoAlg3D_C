@@ -38,7 +38,7 @@ SET_ODE_INITIAL_CONDITIONS_CPU(set_model_initial_conditions_cpu) {
     real *transmurality = NULL;
 	real *sf_Iks = NULL;
     if(solver->ode_extra_data) {
-        struct extra_data_for_torord_land_twave *extra_data = (struct extra_data_for_torord_land_twave*)solver->ode_extra_data;
+        struct extra_data_for_torord_gksgkrtjca_twave *extra_data = (struct extra_data_for_torord_gksgkrtjca_twave*)solver->ode_extra_data;
         initial_endo = extra_data->initial_ss_endo;
         initial_epi = extra_data->initial_ss_epi;
         initial_mid = extra_data->initial_ss_mid;
@@ -68,54 +68,6 @@ SET_ODE_INITIAL_CONDITIONS_CPU(set_model_initial_conditions_cpu) {
         for(uint32_t i = 0; i < num_cells; i++){
             
             real *sv = &solver->sv[i * NEQ];
-
-            // Default initial conditions (endocardium cell)
-            /*
-            sv[0] = -88.7638;
-            sv[1] = 0.0111;
-            sv[2] = 7.0305e-5;
-            sv[3] = 12.1025;
-            sv[4] = 12.1029;
-            sv[5] = 142.3002;
-            sv[6] = 142.3002;
-            sv[7] = 1.5211;
-            sv[8] = 1.5214;
-            sv[9] = 8.1583e-05;
-            sv[10] = 8.0572e-4;
-            sv[11] = 0.8286;
-            sv[12] = 0.8284;
-            sv[13] = 0.6707;
-            sv[14] = 0.8281;
-            sv[15] = 1.629e-4;
-            sv[16] = 0.5255;
-            sv[17] = 0.2872;
-            sv[18] = 9.5098e-4;
-            sv[19] = 0.9996;
-            sv[20] = 0.5936;
-            sv[21] = 4.8454e-4;
-            sv[22] = 0.9996;
-            sv[23] = 0.6538;
-            sv[24] = 8.1084e-9;
-            sv[25] = 1.0;
-            sv[26] = 0.939;
-            sv[27] = 1.0;
-            sv[28] = 0.9999;
-            sv[29] = 1.0;
-            sv[30] = 1.0;
-            sv[31] = 1.0;
-            sv[32] = 6.6462e-4;
-            sv[33] = 0.0012;
-            sv[34] = 7.0344e-4;
-            sv[35] = 8.5109e-4;
-            sv[36] = 0.9981;
-            sv[37] = 1.3289e-5;
-            sv[38] = 3.7585e-4;
-            sv[39] = 0.248;
-            sv[40] = 1.7707e-4;
-            sv[41] = 1.6129e-22;
-            sv[42] = 1.2475e-20;
-            */
-
             // Steady-state after 200 beats (endocardium cell)
             sv[0] = -8.890585e+01;
             sv[1] = 1.107642e-02;
@@ -176,49 +128,43 @@ SOLVE_MODEL_ODES(solve_model_odes_cpu) {
     bool adpt = ode_solver->adaptive;
 
     // Get the extra parameters
-    int num_extra_parameters = 17;
+    int num_extra_parameters = 20;
     real extra_par[num_extra_parameters];
     real *transmurality = NULL;
 	real *sf_Iks = NULL;
     if (ode_solver->ode_extra_data) {
-        struct extra_data_for_torord_land_twave *extra_data = (struct extra_data_for_torord_land_twave*)ode_solver->ode_extra_data;
+        struct extra_data_for_torord_gksgkrtjca_twave *extra_data = (struct extra_data_for_torord_gksgkrtjca_twave*)ode_solver->ode_extra_data;
         extra_par[0]  = extra_data->INa_Multiplier; 
-        extra_par[1]  = extra_data->ICaL_Multiplier;
-        extra_par[2]  = extra_data->Ito_Multiplier;
-        extra_par[3]  = extra_data->INaL_Multiplier;
-        extra_par[4]  = extra_data->IKr_Multiplier; 
-        extra_par[5]  = extra_data->IKs_Multiplier; 
-        extra_par[6]  = extra_data->IK1_Multiplier; 
-        extra_par[7]  = extra_data->IKb_Multiplier; 
-        extra_par[8]  = extra_data->INaCa_Multiplier;
-        extra_par[9]  = extra_data->INaK_Multiplier;  
-        extra_par[9]  = extra_data->INab_Multiplier;  
-        extra_par[10] = extra_data->ICab_Multiplier;  
-        extra_par[11] = extra_data->IpCa_Multiplier;  
-        extra_par[12] = extra_data->ICaCl_Multiplier;
-        extra_par[13] = extra_data->IClb_Multiplier; 
-        extra_par[15] = extra_data->Jrel_Multiplier; 
-        extra_par[16] = extra_data->Jup_Multiplier;
+        extra_par[1]  = extra_data->INaL_Multiplier;
+        extra_par[2]  = extra_data->INaCa_Multiplier;
+        extra_par[3]  = extra_data->INaK_Multiplier;
+        extra_par[4]  = extra_data->INab_Multiplier; 
+        extra_par[5]  = extra_data->Ito_Multiplier;
+        extra_par[6]  = extra_data->IKr_Multiplier; 
+        extra_par[7]  = extra_data->IKs_Multiplier; 
+        extra_par[8]  = extra_data->IK1_Multiplier;
+        extra_par[9]  = extra_data->IKb_Multiplier;
+        extra_par[10]  = extra_data->IKCa_Multiplier;
+        extra_par[11] = extra_data->ICaL_Multiplier;  
+        extra_par[12] = extra_data->ICab_Multiplier;  
+        extra_par[13] = extra_data->IpCa_Multiplier;
+        extra_par[14] = extra_data->ICaCl_Multiplier; 
+        extra_par[15] = extra_data->IClb_Multiplier;
+        extra_par[16] = extra_data->Jrel_Multiplier;
+        extra_par[17] = extra_data->Jup_Multiplier;
+        extra_par[18] = extra_data->aCaMK_Multiplier;
+        extra_par[19] = extra_data->taurelp_Multiplier;
+        sf_Iks = extra_data->sf_IKs;
         transmurality = extra_data->transmurality;
     }
     else {
-        extra_par[0]  = 1.0; 
-        extra_par[1]  = 1.0;
-        extra_par[2]  = 1.0;
-        extra_par[3]  = 1.0;
-        extra_par[4]  = 1.0;
-        extra_par[5]  = 1.0;
-        extra_par[6]  = 1.0; 
-        extra_par[7]  = 1.0; 
-        extra_par[8]  = 1.0;
-        extra_par[9]  = 1.0;
-        extra_par[9]  = 1.0; 
-        extra_par[10] = 1.0;  
-        extra_par[11] = 1.0; 
-        extra_par[12] = 1.0;
-        extra_par[13] = 1.0;
-        extra_par[15] = 1.0;
-        extra_par[16] = 1.0;
+        // Default: initialize all current modifiers
+        for (uint32_t i = 0; i < num_extra_parameters; i++) {
+            if (i == 9)
+                extra_par[i] = 0.0;
+            else 
+                extra_par[i] = 1.0;
+        }
     }
 
     OMP(parallel for private(sv_id))
@@ -234,7 +180,7 @@ SOLVE_MODEL_ODES(solve_model_odes_cpu) {
                 solve_forward_euler_cpu_adpt(sv + (sv_id * NEQ), stim_currents[i], transmurality[i], sf_Iks[i], current_t + dt, sv_id, ode_solver, extra_par);
             }
             else {
-			    log_error_and_exit("This cellular model needs an extra data section!");
+			    solve_forward_euler_cpu_adpt(sv + (sv_id * NEQ), stim_currents[i], 0.0, 1.0, current_t + dt, sv_id, ode_solver, extra_par);
             }
         }
         else {
@@ -243,7 +189,7 @@ SOLVE_MODEL_ODES(solve_model_odes_cpu) {
                     solve_model_ode_cpu(dt, sv + (sv_id * NEQ), stim_currents[i], transmurality[i], sf_Iks[i], extra_par);
                 }
                 else {
-				    log_error_and_exit("This cellular model needs an extra data section!");
+				    solve_model_ode_cpu(dt, sv + (sv_id * NEQ), stim_currents[i], 0.0, 1.0, extra_par);
                 }
             }
         }
@@ -436,23 +382,26 @@ void solve_forward_euler_cpu_adpt(real *sv, real stim_curr, real transmurality, 
 void RHS_cpu(const real *sv, real *rDY_, real stim_current, real dt, real transmurality, real sf_Iks, real const *extra_params) {
 
     // Current modifiers
-    real INa_Multiplier   = extra_params[0]; 
-    real ICaL_Multiplier  = extra_params[1];
-    real Ito_Multiplier   = extra_params[2];
-    real INaL_Multiplier  = extra_params[3];
-    real IKr_Multiplier   = extra_params[4]; 
-    real IKs_Multiplier   = extra_params[5]; 
-    real IK1_Multiplier   = extra_params[6]; 
-    real IKb_Multiplier   = extra_params[7]; 
-    real INaCa_Multiplier = extra_params[8];
-    real INaK_Multiplier  = extra_params[9];  
-    real INab_Multiplier  = extra_params[10];  
-    real ICab_Multiplier  = extra_params[11];  
-    real IpCa_Multiplier  = extra_params[12];  
-    real ICaCl_Multiplier = extra_params[13];
-    real IClb_Multiplier  = extra_params[14]; 
-    real Jrel_Multiplier  = extra_params[15]; 
-    real Jup_Multiplier   = extra_params[16];
+    real INa_Multiplier = extra_params[0];   
+    real INaL_Multiplier = extra_params[1];  
+    real INaCa_Multiplier = extra_params[2];  
+    real INaK_Multiplier = extra_params[3];  
+    real INab_Multiplier = extra_params[4];   
+    real Ito_Multiplier = extra_params[5];  
+    real IKr_Multiplier = extra_params[6];   
+    real IKs_Multiplier = extra_params[7];   
+    real IK1_Multiplier = extra_params[8];  
+    real IKb_Multiplier = extra_params[9];  
+    real IKCa_Multiplier = extra_params[10];  
+    real ICaL_Multiplier = extra_params[11];   
+    real ICab_Multiplier = extra_params[12];   
+    real IpCa_Multiplier = extra_params[13]; 
+    real ICaCl_Multiplier = extra_params[14];  
+    real IClb_Multiplier = extra_params[15]; 
+    real Jrel_Multiplier = extra_params[16]; 
+    real Jup_Multiplier = extra_params[17]; 
+    real aCaMK_Multiplier = extra_params[18]; 
+    real taurelp_Multiplier = extra_params[19];
 
     // Get the celltype for the current cell
     real celltype = transmurality;
@@ -511,23 +460,26 @@ void RHS_cpu(const real *sv, real *rDY_, real stim_current, real dt, real transm
 void RHS_RL_cpu(real *a_, real *b_, const real *sv, real *rDY_, real stim_current, real dt, real transmurality, real sf_Iks, real const *extra_params) {
 
     // Current modifiers
-    real INa_Multiplier   = extra_params[0]; 
-    real ICaL_Multiplier  = extra_params[1];
-    real Ito_Multiplier   = extra_params[2];
-    real INaL_Multiplier  = extra_params[3];
-    real IKr_Multiplier   = extra_params[4]; 
-    real IKs_Multiplier   = extra_params[5]; 
-    real IK1_Multiplier   = extra_params[6]; 
-    real IKb_Multiplier   = extra_params[7]; 
-    real INaCa_Multiplier = extra_params[8];
-    real INaK_Multiplier  = extra_params[9];  
-    real INab_Multiplier  = extra_params[10];  
-    real ICab_Multiplier  = extra_params[11];  
-    real IpCa_Multiplier  = extra_params[12];  
-    real ICaCl_Multiplier = extra_params[13];
-    real IClb_Multiplier  = extra_params[14]; 
-    real Jrel_Multiplier  = extra_params[15]; 
-    real Jup_Multiplier   = extra_params[16];
+    real INa_Multiplier = extra_params[0];   
+    real INaL_Multiplier = extra_params[1];  
+    real INaCa_Multiplier = extra_params[2];  
+    real INaK_Multiplier = extra_params[3];  
+    real INab_Multiplier = extra_params[4];   
+    real Ito_Multiplier = extra_params[5];  
+    real IKr_Multiplier = extra_params[6];   
+    real IKs_Multiplier = extra_params[7];   
+    real IK1_Multiplier = extra_params[8];  
+    real IKb_Multiplier = extra_params[9];  
+    real IKCa_Multiplier = extra_params[10];  
+    real ICaL_Multiplier = extra_params[11];   
+    real ICab_Multiplier = extra_params[12];   
+    real IpCa_Multiplier = extra_params[13]; 
+    real ICaCl_Multiplier = extra_params[14];  
+    real IClb_Multiplier = extra_params[15]; 
+    real Jrel_Multiplier = extra_params[16]; 
+    real Jup_Multiplier = extra_params[17]; 
+    real aCaMK_Multiplier = extra_params[18]; 
+    real taurelp_Multiplier = extra_params[19];
 
     // Get the celltype for the current cell
     real celltype = transmurality;

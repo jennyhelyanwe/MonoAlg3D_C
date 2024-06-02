@@ -1010,10 +1010,8 @@ int calc_num_refs(real_cpu start_h, real_cpu desired_h) {
     return num_refs;
 }
 
-void set_plain_fibrosis_source_sink_region (struct grid *the_grid, real_cpu phi, unsigned fib_seed, const double min_x, const double max_x, const double min_y,
-                                      const double max_y, const double min_z, const double max_z,
-                                      real_cpu source_sink_min_x, real_cpu source_sink_max_x, real_cpu side_length) {
-    log_info("Making %.2lf %% of cells inside the region inactive\n", phi * 100.0);
+void set_cuboid_sphere_fibrosis_with_conic_path(struct grid *the_grid, real_cpu phi, real_cpu plain_center_x, real_cpu plain_center_y, \
+                                                real_cpu sphere_radius, real_cpu bz_size, real_cpu bz_radius, unsigned fib_seed, real_cpu cone_slope) {
 
     struct cell_node *grid_cell;
 
@@ -1031,13 +1029,50 @@ void set_plain_fibrosis_source_sink_region (struct grid *the_grid, real_cpu phi,
 
     grid_cell = the_grid->first_cell;
     while(grid_cell != 0) {
-        real center_x = grid_cell->center.x;
-        real center_y = grid_cell->center.y;
-        real center_z = grid_cell->center.z;
+        // Calculate distance to the center of the mesh
+        real_cpu distance = pow(grid_cell->center.x - plain_center_x, 2.0) + pow(grid_cell->center.y - plain_center_y, 2.0);
+        real_cpu h_distance = abs(grid_cell->center.y - plain_center_y); 
+        
+        if(grid_cell->active) {
 
-        if(center_x >= min_x && center_x <= max_x && center_y >= min_y && center_y <= max_y && center_z >= min_z && center_z <= max_z
-            && (center_y > a1*center_x + b1 || center_y > a2*center_x + b2)) {
-            if(grid_cell->active) {
+            INITIALIZE_FIBROTIC_INFO(grid_cell);
+
+            if(distance <= bz_radius_2) {
+                // Inside border zone 
+                if(distance <= sphere_radius_2) {
+                    // Inside the sphere
+                    if(h_distance < cone_slope*abs(the_grid->mesh_side_length.x - grid_cell->center.x)*plain_center_x) //abs(cone_slope*grid_cell->center.y)
+                    {
+                        // Inside the cone
+                        FIBROTIC(grid_cell) = true;
+                    }
+                    else{
+                        grid_cell->active = false;
+                        grid_cell->can_change = false;
+                        FIBROTIC(grid_cell) = true;
+                    }
+                } else {
+                    BORDER_ZONE(grid_cell) = true;
+                }
+            }
+        }
+        grid_cell = grid_cell->next;
+    }
+
+    grid_cell = the_grid->first_cell;
+
+    while(grid_cell != 0) {
+        if(grid_cell->active) {
+            if(FIBROTIC(grid_cell)) {
+                real_cpu p = (real_cpu)(rand()) / (RAND_MAX);
+                if(p < phi)
+                    grid_cell->active = false;
+                grid_cell->can_change = false;
+            } else if(BORDER_ZONE(grid_cell)) {
+                real_cpu distance_from_center = sqrt((grid_cell->center.x - plain_center_x) * (grid_cell->center.x - plain_center_x) +
+                                                     (grid_cell->center.y - plain_center_y) * (grid_cell->center.y - plain_center_y));
+                distance_from_center = (distance_from_center - sphere_radius) / bz_size;
+                real_cpu phi_local = phi - phi * distance_from_center;
                 real_cpu p = (real_cpu)(rand()) / (RAND_MAX);
                 if(p < phi) {
                     grid_cell->active = false;

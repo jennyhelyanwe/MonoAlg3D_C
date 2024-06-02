@@ -10,6 +10,7 @@ struct default_fibrotic_mesh_info {
     int tissue_type;
 };
 
+// TODO: Move this struct and its macros to "custom_mesh_info_data.h"!
 struct dti_mesh_info {
 	enum dti_transmurality_labels {
 		DTI_FAST_ENDO,

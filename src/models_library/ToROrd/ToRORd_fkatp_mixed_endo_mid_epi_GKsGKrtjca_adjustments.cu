@@ -8,52 +8,6 @@ __global__ void kernel_set_model_initial_conditions(real *sv, int num_volumes, s
     // Default initial conditions (endocardium cell)
     if (threadID < num_volumes) {
         for (int i = 0; i < NEQ; i++) {
-            /*
-            // Default initial conditions (endocardium cell)
-            *((real * )((char *) sv + pitch * 0) + threadID) = -88.7638;
-            *((real * )((char *) sv + pitch * 1) + threadID) = 0.0111;
-            *((real * )((char *) sv + pitch * 2) + threadID)= 7.0305e-5;
-            *((real * )((char *) sv + pitch * 3) + threadID)= 12.1025;
-            *((real * )((char *) sv + pitch * 4) + threadID)= 12.1029;
-            *((real * )((char *) sv + pitch * 5) + threadID)= 142.3002;
-            *((real * )((char *) sv + pitch * 6) + threadID)= 142.3002;
-            *((real * )((char *) sv + pitch * 7) + threadID)= 1.5211;
-            *((real * )((char *) sv + pitch * 8) + threadID)= 1.5214;
-            *((real * )((char *) sv + pitch * 9) + threadID)= 8.1583e-05;
-            *((real * )((char *) sv + pitch * 10) + threadID) = 8.0572e-4;
-            *((real * )((char *) sv + pitch * 11) + threadID) = 0.8286;
-            *((real * )((char *) sv + pitch * 12) + threadID) = 0.8284;
-            *((real * )((char *) sv + pitch * 13) + threadID) = 0.6707;
-            *((real * )((char *) sv + pitch * 14) + threadID) = 0.8281;
-            *((real * )((char *) sv + pitch * 15) + threadID) = 1.629e-4;
-            *((real * )((char *) sv + pitch * 16) + threadID) = 0.5255;
-            *((real * )((char *) sv + pitch * 17) + threadID) = 0.2872;
-            *((real * )((char *) sv + pitch * 18) + threadID) = 9.5098e-4;
-            *((real * )((char *) sv + pitch * 19) + threadID) = 0.9996;
-            *((real * )((char *) sv + pitch * 20) + threadID) = 0.5936;
-            *((real * )((char *) sv + pitch * 21) + threadID) = 4.8454e-4;
-            *((real * )((char *) sv + pitch * 22) + threadID) = 0.9996;
-            *((real * )((char *) sv + pitch * 23) + threadID) = 0.6538;
-            *((real * )((char *) sv + pitch * 24) + threadID) = 8.1084e-9;
-            *((real * )((char *) sv + pitch * 25) + threadID) = 1.0;
-            *((real * )((char *) sv + pitch * 26) + threadID) = 0.939;
-            *((real * )((char *) sv + pitch * 27) + threadID) = 1.0;
-            *((real * )((char *) sv + pitch * 28) + threadID) = 0.9999;
-            *((real * )((char *) sv + pitch * 29) + threadID) = 1.0;
-            *((real * )((char *) sv + pitch * 30) + threadID) = 1.0;
-            *((real * )((char *) sv + pitch * 31) + threadID) = 1.0;
-            *((real * )((char *) sv + pitch * 32) + threadID) = 6.6462e-4;
-            *((real * )((char *) sv + pitch * 33) + threadID) = 0.0012;
-            *((real * )((char *) sv + pitch * 34) + threadID) = 7.0344e-4;
-            *((real * )((char *) sv + pitch * 35) + threadID) = 8.5109e-4;
-            *((real * )((char *) sv + pitch * 36) + threadID) = 0.9981;
-            *((real * )((char *) sv + pitch * 37) + threadID) = 1.3289e-5;
-            *((real * )((char *) sv + pitch * 38) + threadID) = 3.7585e-4;
-            *((real * )((char *) sv + pitch * 39) + threadID) = 0.248;
-            *((real * )((char *) sv + pitch * 40) + threadID) = 1.7707e-4;
-            *((real * )((char *) sv + pitch * 41) + threadID) = 1.6129e-22;
-            *((real * )((char *) sv + pitch * 42) + threadID) = 1.2475e-20;
-            */
             // Steady-state after 200 beats (endocardium cell)
             *((real * )((char *) sv + pitch * 0) + threadID) = -8.890585e+01;
             *((real * )((char *) sv + pitch * 1) + threadID) = 1.107642e-02;
@@ -169,7 +123,7 @@ extern "C" SET_ODE_INITIAL_CONDITIONS_GPU(set_model_initial_conditions_gpu) {
 	real *sf_Iks_device = NULL;
 
     if(solver->ode_extra_data) {
-        struct extra_data_for_torord_land_twave *extra_data = (struct extra_data_for_torord_land_twave*)solver->ode_extra_data;
+        struct extra_data_for_torord_gksgkrtjca_twave *extra_data = (struct extra_data_for_torord_gksgkrtjca_twave*)solver->ode_extra_data;
         initial_conditions_endo = extra_data->initial_ss_endo;
         initial_conditions_epi = extra_data->initial_ss_epi;
         initial_conditions_mid = extra_data->initial_ss_mid;
@@ -219,6 +173,7 @@ extern "C" SOLVE_MODEL_ODES(solve_model_odes_gpu) {
     real *sv = ode_solver->sv;
     real dt = ode_solver->min_dt;
     uint32_t num_steps = ode_solver->num_steps;
+    bool has_extra_params = (ode_solver->ode_extra_data) ? true : false;
 
     // execution configuration
     const int GRID = ((int)num_cells_to_solve + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -237,77 +192,66 @@ extern "C" SOLVE_MODEL_ODES(solve_model_odes_gpu) {
         check_cuda_error(cudaMemcpy(cells_to_solve_device, cells_to_solve, cells_to_solve_size, cudaMemcpyHostToDevice));
     }
 
-    // Get the extra data array if exists
     uint32_t num_volumes = ode_solver->original_num_cells;
     real *transmurality = NULL;
     real *transmurality_device = NULL;
 	real *sf_Iks = NULL;
 	real *sf_Iks_device = NULL;
-    int num_extra_parameters = 17;
+    int num_extra_parameters = 20;
     real extra_par[num_extra_parameters];
     real *extra_par_device = NULL;
+    
+    // Get the extra data array if exists
+    // Transmurality and sf_IKs mapping defined on 'extra_data' function
     if(ode_solver->ode_extra_data) {
-        struct extra_data_for_torord_land_twave *extra_data = (struct extra_data_for_torord_land_twave*)ode_solver->ode_extra_data;
+        struct extra_data_for_torord_gksgkrtjca_twave *extra_data = (struct extra_data_for_torord_gksgkrtjca_twave*)ode_solver->ode_extra_data;
         extra_par[0]  = extra_data->INa_Multiplier; 
-        extra_par[1]  = extra_data->ICaL_Multiplier;
-        extra_par[2]  = extra_data->Ito_Multiplier;
-        extra_par[3]  = extra_data->INaL_Multiplier;
-        extra_par[4]  = extra_data->IKr_Multiplier; 
-        extra_par[5]  = extra_data->IKs_Multiplier; 
-        extra_par[6]  = extra_data->IK1_Multiplier; 
-        extra_par[7]  = extra_data->IKb_Multiplier; 
-        extra_par[8]  = extra_data->INaCa_Multiplier;
-        extra_par[9]  = extra_data->INaK_Multiplier;  
-        extra_par[9]  = extra_data->INab_Multiplier;  
-        extra_par[10] = extra_data->ICab_Multiplier;  
-        extra_par[11] = extra_data->IpCa_Multiplier;  
-        extra_par[12] = extra_data->ICaCl_Multiplier;
-        extra_par[13] = extra_data->IClb_Multiplier; 
-        extra_par[15] = extra_data->Jrel_Multiplier; 
-        extra_par[16] = extra_data->Jup_Multiplier;
-        transmurality = extra_data->transmurality;
+        extra_par[1]  = extra_data->INaL_Multiplier;
+        extra_par[2]  = extra_data->INaCa_Multiplier;
+        extra_par[3]  = extra_data->INaK_Multiplier;
+        extra_par[4]  = extra_data->INab_Multiplier; 
+        extra_par[5]  = extra_data->Ito_Multiplier;
+        extra_par[6]  = extra_data->IKr_Multiplier; 
+        extra_par[7]  = extra_data->IKs_Multiplier; 
+        extra_par[8]  = extra_data->IK1_Multiplier;
+        extra_par[9]  = extra_data->IKb_Multiplier;
+        extra_par[10]  = extra_data->IKCa_Multiplier;
+        extra_par[11] = extra_data->ICaL_Multiplier;  
+        extra_par[12] = extra_data->ICab_Multiplier;  
+        extra_par[13] = extra_data->IpCa_Multiplier;
+        extra_par[14] = extra_data->ICaCl_Multiplier; 
+        extra_par[15] = extra_data->IClb_Multiplier;
+        extra_par[16] = extra_data->Jrel_Multiplier;
+        extra_par[17] = extra_data->Jup_Multiplier;
+        extra_par[18] = extra_data->aCaMK_Multiplier;
+        extra_par[19] = extra_data->taurelp_Multiplier;
         sf_Iks = extra_data->sf_IKs;
+        transmurality = extra_data->transmurality;
+
         check_cuda_error(cudaMalloc((void **)&transmurality_device, sizeof(real)*num_volumes));
         check_cuda_error(cudaMemcpy(transmurality_device, transmurality, sizeof(real)*num_volumes, cudaMemcpyHostToDevice));
         check_cuda_error(cudaMalloc((void **)&sf_Iks_device, sizeof(real)*num_volumes));
         check_cuda_error(cudaMemcpy(sf_Iks_device, sf_Iks, sizeof(real)*num_volumes, cudaMemcpyHostToDevice));
-
-
         check_cuda_error(cudaMalloc((void **)&extra_par_device, sizeof(real)*num_extra_parameters));
         check_cuda_error(cudaMemcpy(extra_par_device, extra_par, sizeof(real)*num_extra_parameters, cudaMemcpyHostToDevice));
     }
+    // No [extra_data] section, we consider all cells ENDO!
     else {
-        extra_par[0]  = 1.0; 
-        extra_par[1]  = 1.0;
-        extra_par[2]  = 1.0;
-        extra_par[3]  = 1.0;
-        extra_par[4]  = 1.0;
-        extra_par[5]  = 1.0;
-        extra_par[6]  = 1.0; 
-        extra_par[7]  = 1.0; 
-        extra_par[8]  = 1.0;
-        extra_par[9]  = 1.0;
-        extra_par[9]  = 1.0; 
-        extra_par[10] = 1.0;  
-        extra_par[11] = 1.0; 
-        extra_par[12] = 1.0;
-        extra_par[13] = 1.0;
-        extra_par[15] = 1.0;
-        extra_par[16] = 1.0;
 
+        // Default: initialize all current modifiers
+        for (uint32_t i = 0; i < num_extra_parameters; i++) {
+            if (i == 9)
+                extra_par[i] = 0.0;
+            else 
+                extra_par[i] = 1.0;
+        }
         check_cuda_error(cudaMalloc((void **)&extra_par_device, sizeof(real)*num_extra_parameters));
         check_cuda_error(cudaMemcpy(extra_par_device, extra_par, sizeof(real)*num_extra_parameters, cudaMemcpyHostToDevice));
     }
 
-    // Transmurality mapping defined on 'extra_data' function
-    if (ode_solver->ode_extra_data) {
-        solve_endo_mid_epi_gpu<<<GRID, BLOCK_SIZE>>>(current_t, dt, sv, stims_currents_device, cells_to_solve_device, transmurality_device, sf_Iks_device, extra_par_device,\
-                                    num_cells_to_solve, num_steps, ode_solver->pitch, ode_solver->adaptive, ode_solver->abs_tol, ode_solver->rel_tol, ode_solver->max_dt);
-    }
-    // No transmurality: all cells ENDO
-    else {
-	    log_error_and_exit("[INFO] You should supply a mask function with this mixed model! The mask function must have transmurality', 'sf_Iks' fields!\n");
-    }
+    // Call the kernel function to solve the cellular model on the GPU
+    solve_endo_mid_epi_gpu<<<GRID, BLOCK_SIZE>>>(current_t, dt, sv, stims_currents_device, cells_to_solve_device, transmurality_device, sf_Iks_device, extra_par_device,\
+                                    num_cells_to_solve, num_steps, ode_solver->pitch, ode_solver->adaptive, ode_solver->abs_tol, ode_solver->rel_tol, ode_solver->max_dt, has_extra_params);
 
     check_cuda_error(cudaPeekAtLastError());
 
@@ -319,7 +263,7 @@ extern "C" SOLVE_MODEL_ODES(solve_model_odes_gpu) {
 }
 
 __global__ void solve_endo_mid_epi_gpu(real cur_time, real dt, real *sv, real *stim_currents, uint32_t *cells_to_solve, real *transmurality, real *sf_Iks, real *extra_params,\
-                          uint32_t num_cells_to_solve, int num_steps, size_t pitch, bool use_adpt, real abstol, real reltol, real max_dt) {
+                          uint32_t num_cells_to_solve, int num_steps, size_t pitch, bool use_adpt, real abstol, real reltol, real max_dt, bool has_extra_params) {
     const real TOLERANCE = 1e-8;
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
     int sv_id;
@@ -337,7 +281,14 @@ __global__ void solve_endo_mid_epi_gpu(real cur_time, real dt, real *sv, real *s
 
             for(int n = 0; n < num_steps; ++n) {
 
-                RHS_RL_gpu(a, b, sv, rDY, stim_currents[threadID], transmurality[threadID], sf_Iks[threadID], extra_params, sv_id, dt, pitch, false);
+                // [!] Transmurality and sf_IKs are given by the columns of ALG mesh file 
+                if (has_extra_params) {
+                    RHS_RL_gpu(a, b, sv, rDY, stim_currents[threadID], transmurality[threadID], sf_Iks[threadID], extra_params, sv_id, dt, pitch, false);
+                }
+                // Default: all cells are ENDO and sf_IKs equals to 1
+                else {
+                    RHS_RL_gpu(a, b, sv, rDY, stim_currents[threadID], 0.0, 1.0, extra_params, sv_id, dt, pitch, false);
+                }                
 
                 // Solve variables based on its type:
                 //  Non-linear = Euler
@@ -387,8 +338,7 @@ __global__ void solve_endo_mid_epi_gpu(real cur_time, real dt, real *sv, real *s
                 SOLVE_EQUATION_RUSH_LARSEN_GPU(42); // Jrel_p
             }
         } else {
-            //solve_forward_euler_gpu_adpt(sv, stim_currents[threadID], transmurality[threadID], extra_params, cur_time + max_dt, sv_id, pitch, abstol,  reltol,  dt,  max_dt);
-            solve_rush_larsen_gpu_adpt(sv, stim_currents[threadID], transmurality[threadID], sf_Iks[threadID], extra_params, cur_time + max_dt, sv_id, pitch, abstol,  reltol,  dt,  max_dt);
+            solve_forward_euler_gpu_adpt(sv, stim_currents[threadID], transmurality[threadID], sf_Iks[threadID], extra_params, cur_time + max_dt, sv_id, pitch, abstol, reltol, dt, max_dt);
         }
     }
 }
@@ -523,226 +473,29 @@ inline __device__ void solve_forward_euler_gpu_adpt(real *sv, real stim_curr, re
     PREVIOUS_DT = previous_dt;
 }
 
-inline __device__ void solve_rush_larsen_gpu_adpt(real *sv, real stim_curr, real transmurality, real sf_Iks, real *extra_params, real final_time, int thread_id, size_t pitch, real abstol, real reltol, real min_dt, real max_dt) {
-
-    #define DT *((real *)((char *)sv + pitch * (NEQ)) + thread_id)
-    #define TIME_NEW *((real *)((char *)sv + pitch * (NEQ+1)) + thread_id)
-    #define PREVIOUS_DT *((real *)((char *)sv + pitch * (NEQ+2)) + thread_id)
-
-    real rDY[NEQ], a_[NEQ], b_[NEQ], a_new[NEQ], b_new[NEQ];
-
-    real dt = DT;
-    real time_new = TIME_NEW;
-    real previous_dt = PREVIOUS_DT;
-
-    real edos_old_aux_[NEQ];
-    real edos_new_euler_[NEQ];
-    real _k1__[NEQ];
-    real _k2__[NEQ];
-    real _k_aux__[NEQ];
-    real sv_local[NEQ];
-
-    const real __tiny_ = pow(abstol, 2.0);
-
-    if(time_new + dt > final_time) {
-        dt = final_time - time_new;
-    }
-
-    for(int i = 0; i < NEQ; i++) {
-        sv_local[i] = *((real *)((char *)sv + pitch * i) + thread_id);
-    }
-
-    RHS_RL_gpu(a_, b_, sv_local, rDY, stim_curr, transmurality, sf_Iks, extra_params, thread_id, dt, pitch, true);
-    time_new += dt;
-
-    for(int i = 0; i < NEQ; i++) {
-        _k1__[i] = rDY[i];
-    }
-
-	while(1) {
-
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(0);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(1);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(2);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(3);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(4);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(5);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(6);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(7);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(8);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(9);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(10);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(11);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(12);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(13);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(14);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(15);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(16);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(17);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(18);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(19);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(20);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(21);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(22);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(23);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(24);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(25);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(26);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(27);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(28);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(29);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(30);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(31);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(32);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(33);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(34);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(35);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(36);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(37);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_EULER_GPU(38);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(39);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(40);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(41);
-        SOLVE_EQUATION_ADAPT_RUSH_LARSEN_RL_GPU(42);
-
-		time_new += dt;
-
-		RHS_RL_gpu(a_new, b_new, sv_local, rDY, stim_curr, transmurality, sf_Iks, extra_params, thread_id, dt, pitch, true);
-		time_new -= dt; // step back
-
-		real greatestError = 0.0, auxError = 0.0;
-		real as, bs, f, y_2nd_order;
-		SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(0);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(1);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(2);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(3);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(4);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(5);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(6);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(7);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(8);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(9);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(10);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(11);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(12);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(13);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(14);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(15);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(16);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(17);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(18);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(19);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(20);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(21);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(22);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(23);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(24);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(25);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(26);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(27);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(28);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(29);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(30);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(31);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(32);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(33);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(34);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(35);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(36);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(37);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_EULER_GPU(38);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(39);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(40);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(41);
-        SOLVE_ERROR_ADAPT_RUSH_LARSEN_RL_GPU(42);
-
-		/// adapt the time step
-		greatestError += __tiny_;
-		previous_dt = dt;
-
-		/// adapt the time step
-		dt = dt * sqrt(0.5f * reltol / greatestError);                  
-
-		if(dt < min_dt) {
-			dt = min_dt;
-		}
-		else if(dt > max_dt) {
-			dt = max_dt;
-		}
-
-		if(time_new + dt > final_time) {
-			dt = final_time - time_new;
-		}
-
-		// it doesn't accept the solution or accept and risk a NaN
-		if(greatestError >= 1.0f && dt > min_dt) {
-			// restore the old values to do it again
-			for(int i = 0; i < NEQ; i++) {
-				sv_local[i] = edos_old_aux_[i];
-			}
-		
-		} else {
-			for(int i = 0; i < NEQ; i++) {
-				_k_aux__[i] = _k2__[i];
-				_k2__[i] = _k1__[i];
-				_k1__[i] = _k_aux__[i];
-
-                _k_aux__[i] = a_[i];
-                a_[i] = a_new[i];
-                a_new[i] = _k_aux__[i];
-
-                _k_aux__[i] = b_[i];
-                b_[i] = b_new[i];
-                b_new[i] = _k_aux__[i];
-			}
-
-			for(int i = 0; i < NEQ; i++) {
-				sv_local[i] = edos_new_euler_[i];
-			}
-
-			if(time_new + previous_dt >= final_time) {
-				if(final_time == time_new) {
-					break;
-				} else if(time_new < final_time) {
-					dt = previous_dt = final_time - time_new;
-					time_new += previous_dt;
-					break;
-				} 	
-			} else {
-				time_new += previous_dt;
-			}
-		}
-	}
-
-    for(int i = 0; i < NEQ; i++) {
-        *((real *)((char *)sv + pitch * i) + thread_id) = sv_local[i];
-    }
-
-    DT = dt;
-    TIME_NEW = time_new;
-    PREVIOUS_DT = previous_dt;
-}
-
 inline __device__ void RHS_gpu(real *sv, real *rDY_, real stim_current, real transmurality, real sf_Iks, real *extra_params, int threadID_, real dt, size_t pitch, bool use_adpt_dt) {
     
     // Current modifiers
-    real INa_Multiplier   = extra_params[0]; 
-    real ICaL_Multiplier  = extra_params[1];
-    real Ito_Multiplier   = extra_params[2];
-    real INaL_Multiplier  = extra_params[3];
-    real IKr_Multiplier   = extra_params[4]; 
-    real IKs_Multiplier   = extra_params[5]; 
-    real IK1_Multiplier   = extra_params[6]; 
-    real IKb_Multiplier   = extra_params[7]; 
-    real INaCa_Multiplier = extra_params[8];
-    real INaK_Multiplier  = extra_params[9];  
-    real INab_Multiplier  = extra_params[10];  
-    real ICab_Multiplier  = extra_params[11];  
-    real IpCa_Multiplier  = extra_params[12];  
-    real ICaCl_Multiplier = extra_params[13];
-    real IClb_Multiplier  = extra_params[14]; 
-    real Jrel_Multiplier  = extra_params[15]; 
-    real Jup_Multiplier   = extra_params[16];
+    real INa_Multiplier = extra_params[0];   
+    real INaL_Multiplier = extra_params[1];  
+    real INaCa_Multiplier = extra_params[2];  
+    real INaK_Multiplier = extra_params[3];  
+    real INab_Multiplier = extra_params[4];   
+    real Ito_Multiplier = extra_params[5];  
+    real IKr_Multiplier = extra_params[6];   
+    real IKs_Multiplier = extra_params[7];   
+    real IK1_Multiplier = extra_params[8];  
+    real IKb_Multiplier = extra_params[9];  
+    real IKCa_Multiplier = extra_params[10];  
+    real ICaL_Multiplier = extra_params[11];   
+    real ICab_Multiplier = extra_params[12];   
+    real IpCa_Multiplier = extra_params[13]; 
+    real ICaCl_Multiplier = extra_params[14];  
+    real IClb_Multiplier = extra_params[15]; 
+    real Jrel_Multiplier = extra_params[16]; 
+    real Jup_Multiplier = extra_params[17]; 
+    real aCaMK_Multiplier = extra_params[18]; 
+    real taurelp_Multiplier = extra_params[19];
 
     // Get the celltype for the current cell
     real celltype = transmurality;
@@ -892,23 +645,26 @@ inline __device__ void RHS_gpu(real *sv, real *rDY_, real stim_current, real tra
 inline __device__ void RHS_RL_gpu(real *a_, real *b_, real *sv, real *rDY_, real stim_current, real transmurality, real sf_Iks, real *extra_params, int threadID_, real dt, size_t pitch, bool use_adpt_dt) {
     
     // Current modifiers
-    real INa_Multiplier   = extra_params[0]; 
-    real ICaL_Multiplier  = extra_params[1];
-    real Ito_Multiplier   = extra_params[2];
-    real INaL_Multiplier  = extra_params[3];
-    real IKr_Multiplier   = extra_params[4]; 
-    real IKs_Multiplier   = extra_params[5]; 
-    real IK1_Multiplier   = extra_params[6]; 
-    real IKb_Multiplier   = extra_params[7]; 
-    real INaCa_Multiplier = extra_params[8];
-    real INaK_Multiplier  = extra_params[9];  
-    real INab_Multiplier  = extra_params[10];  
-    real ICab_Multiplier  = extra_params[11];  
-    real IpCa_Multiplier  = extra_params[12];  
-    real ICaCl_Multiplier = extra_params[13];
-    real IClb_Multiplier  = extra_params[14]; 
-    real Jrel_Multiplier  = extra_params[15]; 
-    real Jup_Multiplier   = extra_params[16];
+    real INa_Multiplier = extra_params[0];   
+    real INaL_Multiplier = extra_params[1];  
+    real INaCa_Multiplier = extra_params[2];  
+    real INaK_Multiplier = extra_params[3];  
+    real INab_Multiplier = extra_params[4];   
+    real Ito_Multiplier = extra_params[5];  
+    real IKr_Multiplier = extra_params[6];   
+    real IKs_Multiplier = extra_params[7];   
+    real IK1_Multiplier = extra_params[8];  
+    real IKb_Multiplier = extra_params[9];  
+    real IKCa_Multiplier = extra_params[10];  
+    real ICaL_Multiplier = extra_params[11];   
+    real ICab_Multiplier = extra_params[12];   
+    real IpCa_Multiplier = extra_params[13]; 
+    real ICaCl_Multiplier = extra_params[14];  
+    real IClb_Multiplier = extra_params[15]; 
+    real Jrel_Multiplier = extra_params[16]; 
+    real Jup_Multiplier = extra_params[17]; 
+    real aCaMK_Multiplier = extra_params[18]; 
+    real taurelp_Multiplier = extra_params[19];
 
     // Get the celltype for the current cell
     real celltype = transmurality;

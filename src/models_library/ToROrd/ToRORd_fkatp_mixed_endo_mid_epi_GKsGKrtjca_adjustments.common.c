@@ -6,29 +6,6 @@ real ko = 5.0;
 real ICaL_fractionSS = 0.8; 
 real INaCa_fractionSS = 0.35;
 
-// Current multipliers
-//real INa_Multiplier = 1; 
-//real ICaL_Multiplier = 1;
-//real Ito_Multiplier = 1;
-//real INaL_Multiplier = 1;
-//real IKr_Multiplier = 1; 
-//real IKs_Multiplier = 1; 
-//real IK1_Multiplier = 1; 
-//real IKb_Multiplier = 1; 
-//real INaCa_Multiplier = 1;
-//real INaK_Multiplier = 1;  
-//real INab_Multiplier = 1;  
-//real ICab_Multiplier = 1;  
-//real IpCa_Multiplier = 1;  
-//real ICaCl_Multiplier = 1;
-//real IClb_Multiplier = 1; 
-//real Jrel_Multiplier = 1; 
-//real Jup_Multiplier = 1; 
-real ICaL_PCaMultiplier = ICaL_Multiplier;
-//vcParameters;
-//apClamp;
-//extraParams
-
 // physical constants
 real R=8314.0;
 real T=310.0;
@@ -53,7 +30,7 @@ real gkatp = 4.3195;
 
 // CaMK constants
 real KmCaMK=0.15;
-real aCaMK=0.05;
+real aCaMK=0.05*aCaMK_Multiplier;
 real bCaMK=0.00068;
 real CaMKo=0.05;
 real KmCaM=0.0015;
@@ -185,7 +162,7 @@ real dfcaf=(fcass-fcaf)/tfcaf;                                                  
 real dfcas=(fcass-fcas)/tfcas;                                                          // Rush-Larsen
 real fca=Afcaf*fcaf+Afcas*fcas;
 
-real tjca = 60; // 75; Adjustments for T wave personalisation
+real tjca = 60; // 75 original. Adjustments to enable GKs to play a bigger role in APD modulation. T wave personalisation. 
 real jcass = 1.0/(1.0+exp((v+18.08)/(2.7916)));   
 real djca=(jcass-jca)/tjca;                                                                  // Rush-Larsen
 real tffp=2.5*tff;
@@ -244,7 +221,7 @@ real PhiCaL_i =  4.0*vffrt*(gamma_cai*cai*exp(2.0*vfrt)-gamma_cao*cao)/(exp(2.0*
 real PhiCaNa_i =  1.0*vffrt*(gamma_nai*nai*exp(1.0*vfrt)-gamma_nao*nao)/(exp(1.0*vfrt)-1.0);
 real PhiCaK_i =  1.0*vffrt*(gamma_ki*ki*exp(1.0*vfrt)-gamma_kao*ko)/(exp(1.0*vfrt)-1.0);
 // The rest
-real PCa=8.3757e-05 * ICaL_PCaMultiplier;
+real PCa=8.3757e-05 * ICaL_Multiplier;
 if (celltype==EPI)
     PCa=PCa*1.2;
 else if (celltype==MID)
@@ -323,7 +300,7 @@ real dc2 = c1 * alpha1 + o*beta2 + I*betaItoC2 - c2 * (beta1 + alpha2 + alphac2T
 real delta_o = c2 * alpha2 + I*betai - o*(beta2+alphai);    // Euler
 real di = c2*alphac2ToI + o*alphai - I*(betaItoC2 + betai); // Euler
 
-real GKr = 0.0321 * sqrt(ko/5) * IKr_Multiplier * 0.6; // 1st element compensates for change to ko (sqrt(5/5.4)* 0.0362) Adjustments for T wave personalisation
+real GKr = 0.0321 * sqrt(ko/5) * IKr_Multiplier * 0.6; // 1st element compensates for change to ko (sqrt(5/5.4)* 0.0362) Adjustment for T wave personalisation. 
 if (celltype==EPI)
     GKr=GKr*1.3;
 else if (celltype==MID)
@@ -339,7 +316,8 @@ real xs2ss=xs1ss;
 real txs2=1.0/(0.01*exp((v-50.0)/20.0)+0.0193*exp((-(v+66.54))/31.0));
 real dxs2=(xs2ss-xs2)/txs2;                               // Rush-Larsen
 real KsCa=1.0+0.6/(1.0+pow((3.8e-5/cai),1.4));
-real GKs= 0.0011 * sf_Iks * 5; // Adjustments for T wave personalisation
+//real GKs= 0.0011 * 5.0 * IKs_Multiplier; 
+real GKs= 0.0011 * 5.0 * sf_Iks; // Adjustment for T wave personalisation
 if (celltype==EPI)
     GKs=GKs*1.4;
 real IKs=GKs*KsCa*xs1*xs2*(v-EKs);
@@ -573,6 +551,7 @@ real tau_relp=btp/(1.0+0.0123/cajsr);
 if (tau_relp<0.001)
     tau_relp=0.001;
 
+tau_relp = tau_relp*taurelp_Multiplier;
 real dJrelp=(Jrel_infp-Jrel_p)/tau_relp;                     // Rush-Larsen
 real Jrel=Jrel_Multiplier * 1.5378 * ((1.0-fJrelp)*Jrel_np+fJrelp*Jrel_p);
 
