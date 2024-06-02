@@ -161,7 +161,8 @@ void write_configuration_file (const double sigma)
     fprintf(file,"dt=0.01\n");
     fprintf(file,"use_gpu=yes\n");
     fprintf(file,"gpu_id=0\n");
-    fprintf(file,"library_file=/home/jenny/MonoAlg3D_C/shared_libs/libten_tusscher_tt3_mixed_endo_mid_epi.so\n");
+    //fprintf(file,"library_file=/home/jenny/MonoAlg3D_C/shared_libs/libten_tusscher_tt3_mixed_endo_mid_epi.so\n");
+	fprintf(file,"library_file=/home/jenny/MonoAlg3D_C/shared_libs/libToRORd_fkatp_mixed_endo_mid_epi_GKsGKrtjca_adjustments.so\n");
     fprintf(file,"\n");
     
     fprintf(file,"[stim_benchmark]\n");
