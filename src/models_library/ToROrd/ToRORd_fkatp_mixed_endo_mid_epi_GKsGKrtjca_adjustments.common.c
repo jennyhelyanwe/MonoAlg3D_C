@@ -300,7 +300,7 @@ real dc2 = c1 * alpha1 + o*beta2 + I*betaItoC2 - c2 * (beta1 + alpha2 + alphac2T
 real delta_o = c2 * alpha2 + I*betai - o*(beta2+alphai);    // Euler
 real di = c2*alphac2ToI + o*alphai - I*(betaItoC2 + betai); // Euler
 
-real GKr = 0.0321 * sqrt(ko/5) * IKr_Multiplier * 0.6; // 1st element compensates for change to ko (sqrt(5/5.4)* 0.0362) Adjustment for T wave personalisation. 
+real GKr = 0.0321 * sqrt(ko/5) * IKr_Multiplier * 0.5; // 1st element compensates for change to ko (sqrt(5/5.4)* 0.0362) Adjustment for T wave personalisation. 
 if (celltype==EPI)
     GKr=GKr*1.3;
 else if (celltype==MID)
