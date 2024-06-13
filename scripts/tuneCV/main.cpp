@@ -20,12 +20,13 @@
 #include <vtkLine.h>
 #include <vtkPointData.h>
 #include <vtkCellLocator.h>
+#include <sys/stat.h>
 
 using namespace std;
 
 // Change your MonoAlg3D path here:
 // ----------------------------------------------------------
-const char MONOALG_PATH[500] = "/home/berg/Github/MonoAlg3D_C";
+const char MONOALG_PATH[500] = "/home/jenny/MonoAlg3D_C";
 // ----------------------------------------------------------
 
 const double TOLERANCE = 1.0e-03;
@@ -94,6 +95,10 @@ double calculate_conduction_velocity_from_simulation ()
 // TODO: Maybe pass a pre-configured config file as an input parameter with the cellular model setup that the user will use
 void write_configuration_file (const double sigma) {
     char filename[500];
+	struct stat sb;
+	stat("/home/jenny/MonoAlg3D_C/scripts/tuneCV/configs", &sb);
+	if (stat("/home/jenny/MonoAlg3D_C/scripts/tuneCV/configs", &sb) == 0)
+		mkdir("/home/jenny/MonoAlg3D_C/scripts/tuneCV/configs", 0777);
     sprintf(filename, "%s/scripts/tuneCV/configs/cable.ini", MONOALG_PATH);
     FILE *file = fopen(filename,"w+");
 
