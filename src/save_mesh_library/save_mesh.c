@@ -158,8 +158,9 @@ SAVE_MESH(save_one_cell_state_variables) {
                                       ode_solver->model_data.number_of_ode_equations, cudaMemcpyDeviceToHost));
 
         // All state variables
+        fprintf(params->file, "%g ", time_info->current_t);
         for (uint32_t i = 0; i < ode_solver->model_data.number_of_ode_equations; i++) {
-            fprintf(params->file, "%g, ", cell_sv[i]);
+            fprintf(params->file, "%g ", cell_sv[i]);
         }
         fprintf(params->file, "\n");
 
@@ -178,9 +179,10 @@ SAVE_MESH(save_one_cell_state_variables) {
         // Only transmembrane potential
         //fprintf(params->file, "%g\n", cell_sv[0]);
 
-        // All state variables
+        // Time and all state variables
+        fprintf(params->file, "%g ", time_info->current_t);
         for (uint32_t i = 0; i < ode_solver->model_data.number_of_ode_equations; i++) {
-            fprintf(params->file, "%g, ", cell_sv[i]);
+            fprintf(params->file, "%g ", cell_sv[i]);
         }
         fprintf(params->file, "\n");
 

@@ -192,10 +192,13 @@ void write_configuration_file (const double sigma_x, const double sigma_y, const
     
     fprintf(file,"[domain]\n");  
     fprintf(file,"name=N-Version Benchmark\n");
-    fprintf(file,"start_discretization=500.0\n");
-    fprintf(file,"maximum_discretization=500.0\n");
+    fprintf(file,"start_discretization=250.0\n");
+    fprintf(file,"maximum_discretization=250.0\n");
     fprintf(file,"library_file=/home/jenny/MonoAlg3D_C/shared_libs/libdefault_domains.so\n");
     fprintf(file,"main_function=initialize_grid_with_benchmark_mesh\n");
+	fprintf(file,"start_dx=0\n");
+	fprintf(file,"start_dy=0\n");
+	fprintf(file,"start_dz=0\n");
     fprintf(file,"side_length_x=20000\n");
     fprintf(file,"side_length_y=10000\n");
     fprintf(file,"side_length_z=10000\n");

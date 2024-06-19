@@ -151,9 +151,9 @@ void write_configuration_file (const double sigma) {
     
     fprintf(file,"[domain]\n");  
     fprintf(file,"name=Simple Cable\n");
-    fprintf(file,"start_dx=500.0\n");
-    fprintf(file,"start_dy=500.0\n");
-    fprintf(file,"start_dz=500.0\n");
+    fprintf(file,"start_dx=250.0\n");
+    fprintf(file,"start_dy=250.0\n");
+    fprintf(file,"start_dz=250.0\n");
     fprintf(file,"cable_length=20000.0\n");
     fprintf(file,"library_file=%s/shared_libs/libdefault_domains.so\n", MONOALG_PATH);
     fprintf(file,"main_function=initialize_grid_with_cable_mesh\n");

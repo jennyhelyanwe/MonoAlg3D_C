@@ -650,3 +650,24 @@ SET_EXTRA_DATA(set_extra_data_for_cable_ToRORd_Land_mixed_endo_mid_epi_IKs) {
 
 	
 }
+
+SET_EXTRA_DATA(set_extra_data_for_cable_ToRORd_mixed_endo_mid_epi_IKs_twave_CL) { 
+	uint32_t num_active_cells = the_grid->num_active_cells;
+    struct cell_node ** ac = the_grid->active_cells;
+
+    struct extra_data_for_torord_gksgkrtjca_twave *extra_data = NULL;
+    extra_data = set_common_torord_gksgkrtjca_twave_data(config, num_active_cells);
+
+    // All cells will be the same type
+    OMP(parallel for)
+    for (int i = 0; i < num_active_cells; i++) {
+        // ENDO
+        extra_data->transmurality[i] = 0.0;
+		extra_data->sf_IKs[i] = 1.0;
+    }
+
+    SET_EXTRA_DATA_SIZE(sizeof(struct extra_data_for_torord_gksgkrtjca_twave));
+
+    return (void*)extra_data;
+
+}
